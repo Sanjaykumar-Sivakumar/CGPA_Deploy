@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let us Calculate your CGPA !!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            margin: auto;
+            backdrop-filter: blur(10px);
+        }
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: #ff9f43;
+            margin-bottom: 20px;
+        }
+        .department-selection, .semester-container {
+            margin-bottom: 20px;
+        }
+        .department-selection select, .semester-container input, .semester-container select {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: none;
+            border-radius: 5px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-family: 'Poppins', sans-serif;
+        }
+        .subject {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .subject input, .subject select {
+            padding: 8px;
+            width: 20%;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-family: 'Poppins', sans-serif;
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        .add-btn {
+            background-color: #28a745;
+            color: white;
+            box-shadow: 0 0 10px #28a745;
+        }
+        .calc-btn {
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 0 10px #007bff;
+        }
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            box-shadow: 0 0 10px #dc3545;
+        }
+        .next-semester-btn {
+            background-color: #ff9f43;
+            color: white;
+            box-shadow: 0 0 10px #ff9f43;
+        }
+        .prev-semester-btn {
+            background-color: #6c757d;
+            color: white;
+            box-shadow: 0 0 10px #6c757d;
+        }
+        button:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+        .result {
+            font-size: 24px;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #ff9f43;
+            text-shadow: 0 0 10px #ff9f43, 0 0 20px #ff9f43;
+        }
+        .progress-bar {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress {
+            height: 10px;
+            background: #007bff;
+            width: 0;
+            transition: width 0.5s;
+            box-shadow: 0 0 10px #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Let us Calculate your CGPA !!</h2>
+        
+        <!-- Department Selection -->
+        <div class="department-selection">
+            <select id="department">
+                <option value="">Select Your Department</option>
+                <option value="CSE">Computer Science & Engineering</option>
+                <option value="ECE">Electronics & Communication</option>
+                <option value="ME">Mechanical Engineering</option>
+                <option value="CE">Civil Engineering</option>
+                <option value="EE">Electrical Engineering</option>
+            </select>
+        </div>
+
+        <!-- Semester Input -->
+        <div class="semester-container">
+            <div id="subjects"></div>
+            <div class="buttons">
+                <button class="add-btn" onclick="addSubject()">Add Subject</button>
+                <button class="prev-semester-btn" onclick="prevSemester()">Previous Semester</button>
+                <button class="next-semester-btn" onclick="nextSemester()">Next Semester</button>
+                <button class="calc-btn" onclick="calculateCGPA()">Calculate CGPA</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+        </div>
+
+        <!-- Result Display -->
+        <div class="result" id="cgpaResult"></div>
+    </div>
+
+    <script>
+        const gradePoints = { "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6, "C": 5 };
+        let currentSemester = 1;
+        let totalSemesters = 8; // Assuming 8 semesters for engineering
+        let semesterData = {}; // Store subject data for each semester
+
+        function addSubject() {
+            let subjectsDiv = document.getElementById("subjects");
+            let subjectRow = document.createElement("div");
+            subjectRow.classList.add("subject");
+
+            subjectRow.innerHTML = `
+                <input type="text" placeholder="Subject Name">
+                <select onchange="updateGradePoint(this)">
+                    ${Object.keys(gradePoints).map(grade => `<option value="${grade}">${grade}</option>`).join('')}
+                </select>
+                <input type="text" class="gradePoint" value="10" disabled>
+                <input type="number" placeholder="Credits" min="1">
+                <button class="remove-btn" onclick="removeSubject(this)">Remove</button>
+            `;
+            subjectsDiv.appendChild(subjectRow);
+        }
+
+        function removeSubject(button) {
+            button.parentElement.remove();
+        }
+
+        function updateGradePoint(select) {
+            let grade = select.value;
+            let gradePointInput = select.parentElement.querySelector(".gradePoint");
+            gradePointInput.value = gradePoints[grade];
+        }
+
+        function saveCurrentSemesterData() {
+            let subjects = document.querySelectorAll(".subject");
+            let subjectData = [];
+            subjects.forEach(subject => {
+                let subjectName = subject.querySelector("input[type='text']").value;
+                let grade = subject.querySelector("select").value;
+                let credits = subject.querySelector("input[type='number']").value;
+                subjectData.push({ subjectName, grade, credits });
+            });
+            semesterData[currentSemester] = subjectData;
+        }
+
+        function loadSemesterData(semester) {
+            let subjectsDiv = document.getElementById("subjects");
+            subjectsDiv.innerHTML = ""; // Clear current subjects
+            if (semesterData[semester]) {
+                semesterData[semester].forEach(data => {
+                    let subjectRow = document.createElement("div");
+                    subjectRow.classList.add("subject");
+                    subjectRow.innerHTML = `
+                        <input type="text" placeholder="Subject Name" value="${data.subjectName}">
+                        <select onchange="updateGradePoint(this)">
+                            ${Object.keys(gradePoints).map(grade => `<option value="${grade}" ${grade === data.grade ? "selected" : ""}>${grade}</option>`).join('')}
+                        </select>
+                        <input type="text" class="gradePoint" value="${gradePoints[data.grade]}" disabled>
+                        <input type="number" placeholder="Credits" min="1" value="${data.credits}">
+                        <button class="remove-btn" onclick="removeSubject(this)">Remove</button>
+                    `;
+                    subjectsDiv.appendChild(subjectRow);
+                });
+            }
+        }
+
+        function prevSemester() {
+            if (currentSemester > 1) {
+                saveCurrentSemesterData(); // Save current semester data
+                currentSemester--;
+                loadSemesterData(currentSemester); // Load previous semester data
+                updateProgressBar();
+            } else {
+                alert("You are already in the first semester!");
+            }
+        }
+
+        function nextSemester() {
+            if (currentSemester < totalSemesters) {
+                saveCurrentSemesterData(); // Save current semester data
+                currentSemester++;
+                loadSemesterData(currentSemester); // Load next semester data
+                updateProgressBar();
+            } else {
+                alert("You have reached the final semester!");
+            }
+        }
+
+        function updateProgressBar() {
+            let progress = (currentSemester / totalSemesters) * 100;
+            document.getElementById("progress").style.width = `${progress}%`;
+        }
+
+        function calculateCGPA() {
+            let subjects = document.querySelectorAll(".subject");
+            let totalGradePoints = 0, totalCredits = 0;
+
+            subjects.forEach(subject => {
+                let gradePoint = parseFloat(subject.querySelector(".gradePoint").value);
+                let credits = parseFloat(subject.querySelector("input[type='number']").value);
+                
+                if (!isNaN(gradePoint) && !isNaN(credits)) {
+                    totalGradePoints += gradePoint * credits;
+                    totalCredits += credits;
+                }
+            });
+
+            let gpa = totalCredits ? (totalGradePoints / totalCredits).toFixed(2) : "0.00";
+            semesterData[currentSemester] = { gpa: parseFloat(gpa), credits: totalCredits };
+
+            let overallGradePoints = 0, overallCredits = 0;
+            Object.values(semesterData).forEach(data => {
+                if (data.gpa && data.credits) {
+                    overallGradePoints += data.gpa * data.credits;
+                    overallCredits += data.credits;
+                }
+            });
+
+            let cgpa = overallCredits ? (overallGradePoints / overallCredits).toFixed(2) : "0.00";
+            document.getElementById("cgpaResult").innerHTML = `
+                Current Semester GPA: <span style="font-size: 2rem; text-shadow: 0 0 10px #ff9f43;">${gpa}</span><br>
+                Overall CGPA: <span style="font-size: 2rem; text-shadow: 0 0 10px #ff9f43;">${cgpa}</span>
+            `;
+        }
+    </script>
+
+</body>
+</html>
