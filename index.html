@@ -514,7 +514,6 @@
             
             <!-- Back Button -->
             <button class="back-btn" onclick="showPage('welcomePage')">Back to Home</button>
-            <button class="remove-btn" onclick="clearAllData()">Clear Saved Data</button>
         </div>
     </div>
 
@@ -542,7 +541,6 @@
                 document.getElementById('cgpaResult').textContent = '';
                 updateSemesterDisplay();
         updateProgressBar();
-        loadFromLocalStorage();
         loadFromLocalStorage();
             }
         }
@@ -851,64 +849,58 @@
 
         
         // -------- localStorage Support --------
-const GPA_KEY="gpaData";
+        function saveToLocalStorage() {
+            localStorage.setItem("semesterData", JSON.stringify(semesterData));
+            localStorage.setItem("currentSemester", currentSemester);
+        }
 
-function saveGPAData(){
- const rows=[...document.querySelectorAll("#gpaSubjects .subject")].map(r=>({
-  subjectName:r.querySelector("input[type='text']").value,
-  grade:r.querySelector("select").value,
-  credits:r.querySelector("input[type='number']").value
- }));
- localStorage.setItem(GPA_KEY,JSON.stringify(rows));
- localStorage.setItem("gpaDepartment",document.getElementById("gpaDepartment").value);
-}
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem("semesterData");
+            const savedSemester = localStorage.getItem("currentSemester");
 
-function loadGPAData(){
- const rows=JSON.parse(localStorage.getItem(GPA_KEY)||"[]");
- const div=document.getElementById("gpaSubjects");
- div.innerHTML="";
- rows.forEach(d=>{
-   addSubject("gpa");
-   const r=div.lastElementChild;
-   r.querySelector("input[type='text']").value=d.subjectName;
-   r.querySelector("select").value=d.grade;
-   updateGradePoint(r.querySelector("select"));
-   r.querySelector("input[type='number']").value=d.credits;
- });
- document.getElementById("gpaDepartment").value=localStorage.getItem("gpaDepartment")||"";
-}
+            if (savedData) semesterData = JSON.parse(savedData);
+            if (savedSemester) currentSemester = parseInt(savedSemester);
 
-function saveToLocalStorage(){
- localStorage.setItem("semesterData",JSON.stringify(semesterData));
- localStorage.setItem("currentSemester",currentSemester);
- localStorage.setItem("cgpaDepartment",document.getElementById("cgpaDepartment").value);
- localStorage.setItem("activePage",document.querySelector(".active-page").id);
- saveGPAData();
-}
+            updateSemesterDisplay();
+            updateProgressBar();
+            loadSemesterData(currentSemester);
+        }
 
-function loadFromLocalStorage(){
- semesterData=JSON.parse(localStorage.getItem("semesterData")||"{}");
- currentSemester=parseInt(localStorage.getItem("currentSemester")||1);
- document.getElementById("cgpaDepartment").value=localStorage.getItem("cgpaDepartment")||"";
- updateSemesterDisplay();
- updateProgressBar();
- loadSemesterData(currentSemester);
- loadGPAData();
- const pg=localStorage.getItem("activePage");
- if(pg) showPage(pg);
-}
+        function clearAllData() {
+            if (confirm("Delete all saved data?")) {
+                localStorage.removeItem("semesterData");
+                localStorage.removeItem("currentSemester");
+                semesterData = {};
+                currentSemester = 1;
+                location.reload();
+            }
+        }
 
-function clearAllData(){
- if(confirm("Delete all saved data?")){
-   localStorage.clear();
-   location.reload();
- }
-}
 
-document.addEventListener("input",()=>saveToLocalStorage());
-document.addEventListener("change",()=>saveToLocalStorage());
+        
+        function saveDepartmentsAndPage(){
+            localStorage.setItem("gpaDepartment", document.getElementById("gpaDepartment").value);
+            localStorage.setItem("cgpaDepartment", document.getElementById("cgpaDepartment").value);
+            const active=document.querySelector(".active-page");
+            if(active) localStorage.setItem("activePage", active.id);
+        }
 
-// Initialize
+        document.addEventListener("input",()=>{
+            if(document.getElementById("cgpaPage").classList.contains("active-page")){
+                saveCurrentSemesterData();
+            }
+            saveDepartmentsAndPage();
+        });
+
+        document.addEventListener("change",()=>{
+            if(document.getElementById("cgpaPage").classList.contains("active-page")){
+                saveCurrentSemesterData();
+            }
+            saveDepartmentsAndPage();
+        });
+
+
+        // Initialize
         updateSemesterDisplay();
         updateProgressBar();
     </script>
