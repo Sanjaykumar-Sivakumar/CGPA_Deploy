@@ -468,6 +468,7 @@
             
             <!-- Back Button -->
             <button class="back-btn" onclick="showPage('welcomePage')">Back to Home</button>
+            <button class="remove-btn" onclick="clearAllData()">Clear Saved Data</button>
         </div>
 
         <!-- CGPA Page (Multi-Semester) -->
@@ -513,6 +514,7 @@
             
             <!-- Back Button -->
             <button class="back-btn" onclick="showPage('welcomePage')">Back to Home</button>
+            <button class="remove-btn" onclick="clearAllData()">Clear Saved Data</button>
         </div>
     </div>
 
@@ -530,7 +532,8 @@
             });
             
             // Show the selected page
-            document.getElementById(pageId).classList.add('active-page');
+            document.getElementById(pageId).classList.add("active-page");
+            localStorage.setItem("activePage",pageId);
             
             // Reset results when changing pages
             if (pageId === 'gpaPage') {
@@ -538,7 +541,9 @@
             } else if (pageId === 'cgpaPage') {
                 document.getElementById('cgpaResult').textContent = '';
                 updateSemesterDisplay();
-                updateProgressBar();
+        updateProgressBar();
+        loadFromLocalStorage();
+        loadFromLocalStorage();
             }
         }
 
@@ -607,6 +612,7 @@
                 subjectData.push({ subjectName, grade, credits });
             });
             semesterData[currentSemester] = subjectData;
+            saveToLocalStorage();
         }
 
         function loadSemesterData(semester) {
@@ -651,7 +657,10 @@
             if (currentSemester > 1) {
                 saveCurrentSemesterData(); // Save current semester data
                 currentSemester--;
-                loadSemesterData(currentSemester); // Load previous semester data
+                loadSemesterData(currentSemester);
+            document.getElementById("gpaDepartment").value=localStorage.getItem("gpaDepartment")||"";
+            document.getElementById("cgpaDepartment").value=localStorage.getItem("cgpaDepartment")||"";
+            const p=localStorage.getItem("activePage"); if(p) showPage(p); // Load previous semester data
                 updateProgressBar();
                 updateSemesterDisplay();
             } else {
@@ -840,7 +849,66 @@
             document.head.appendChild(style);
         }
 
-        // Initialize
+        
+        // -------- localStorage Support --------
+const GPA_KEY="gpaData";
+
+function saveGPAData(){
+ const rows=[...document.querySelectorAll("#gpaSubjects .subject")].map(r=>({
+  subjectName:r.querySelector("input[type='text']").value,
+  grade:r.querySelector("select").value,
+  credits:r.querySelector("input[type='number']").value
+ }));
+ localStorage.setItem(GPA_KEY,JSON.stringify(rows));
+ localStorage.setItem("gpaDepartment",document.getElementById("gpaDepartment").value);
+}
+
+function loadGPAData(){
+ const rows=JSON.parse(localStorage.getItem(GPA_KEY)||"[]");
+ const div=document.getElementById("gpaSubjects");
+ div.innerHTML="";
+ rows.forEach(d=>{
+   addSubject("gpa");
+   const r=div.lastElementChild;
+   r.querySelector("input[type='text']").value=d.subjectName;
+   r.querySelector("select").value=d.grade;
+   updateGradePoint(r.querySelector("select"));
+   r.querySelector("input[type='number']").value=d.credits;
+ });
+ document.getElementById("gpaDepartment").value=localStorage.getItem("gpaDepartment")||"";
+}
+
+function saveToLocalStorage(){
+ localStorage.setItem("semesterData",JSON.stringify(semesterData));
+ localStorage.setItem("currentSemester",currentSemester);
+ localStorage.setItem("cgpaDepartment",document.getElementById("cgpaDepartment").value);
+ localStorage.setItem("activePage",document.querySelector(".active-page").id);
+ saveGPAData();
+}
+
+function loadFromLocalStorage(){
+ semesterData=JSON.parse(localStorage.getItem("semesterData")||"{}");
+ currentSemester=parseInt(localStorage.getItem("currentSemester")||1);
+ document.getElementById("cgpaDepartment").value=localStorage.getItem("cgpaDepartment")||"";
+ updateSemesterDisplay();
+ updateProgressBar();
+ loadSemesterData(currentSemester);
+ loadGPAData();
+ const pg=localStorage.getItem("activePage");
+ if(pg) showPage(pg);
+}
+
+function clearAllData(){
+ if(confirm("Delete all saved data?")){
+   localStorage.clear();
+   location.reload();
+ }
+}
+
+document.addEventListener("input",()=>saveToLocalStorage());
+document.addEventListener("change",()=>saveToLocalStorage());
+
+// Initialize
         updateSemesterDisplay();
         updateProgressBar();
     </script>
