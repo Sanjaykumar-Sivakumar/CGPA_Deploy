@@ -514,6 +514,7 @@
             
             <!-- Back Button -->
             <button class="back-btn" onclick="showPage('welcomePage')">Back to Home</button>
+            <button class="remove-btn" onclick="clearAllData()">Clear Saved Data</button>
         </div>
     </div>
 
@@ -541,6 +542,8 @@
                 document.getElementById('cgpaResult').textContent = '';
                 updateSemesterDisplay();
         updateProgressBar();
+        loadFromLocalStorage();
+        loadGPAData();
         loadFromLocalStorage();
             }
         }
@@ -870,6 +873,10 @@
             if (confirm("Delete all saved data?")) {
                 localStorage.removeItem("semesterData");
                 localStorage.removeItem("currentSemester");
+                localStorage.removeItem("gpaData");
+                localStorage.removeItem("gpaDepartment");
+                localStorage.removeItem("cgpaDepartment");
+                localStorage.removeItem("activePage");
                 semesterData = {};
                 currentSemester = 1;
                 location.reload();
@@ -900,7 +907,47 @@
         });
 
 
-        // Initialize
+        
+// ===== GPA LOCAL STORAGE =====
+function saveGPAData(){
+ const data={
+  department:document.getElementById("gpaDepartment").value,
+  subjects:[]
+ };
+ document.querySelectorAll("#gpaSubjects .subject").forEach(s=>{
+   data.subjects.push({
+     subject:s.querySelector("input[type='text']").value,
+     grade:s.querySelector("select").value,
+     credits:s.querySelector("input[type='number']").value
+   });
+ });
+ localStorage.setItem("gpaData",JSON.stringify(data));
+}
+function loadGPAData(){
+ const saved=JSON.parse(localStorage.getItem("gpaData")||"null");
+ if(!saved) return;
+ document.getElementById("gpaDepartment").value=saved.department||"";
+ const div=document.getElementById("gpaSubjects");
+ div.innerHTML="";
+ (saved.subjects||[]).forEach(d=>{
+   addSubject("gpa");
+   const row=div.lastElementChild;
+   row.querySelector("input[type='text']").value=d.subject;
+   row.querySelector("select").value=d.grade;
+   updateGradePoint(row.querySelector("select"));
+   row.querySelector("input[type='number']").value=d.credits;
+ });
+}
+
+document.addEventListener("input",()=>{
+ if(document.getElementById("gpaPage").classList.contains("active-page")) saveGPAData();
+});
+document.addEventListener("change",()=>{
+ if(document.getElementById("gpaPage").classList.contains("active-page")) saveGPAData();
+});
+
+
+// Initialize
         updateSemesterDisplay();
         updateProgressBar();
     </script>
